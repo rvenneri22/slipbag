@@ -2,29 +2,18 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Mixed Reality Ball Swing</title>
+    <title>MR Fake Swing Ball</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
   </head>
   <body>
     <a-scene
-      embedded
-      renderer="alpha: true; physicallyCorrectLights: true;"
+      renderer="alpha: true"
       xr-mode="immersive-ar"
       environment="enabled: false"
       webxr="requiredFeatures: local-floor; optionalFeatures: hand-tracking"
-      physics="driver: ammo; gravity: -9.8"
       style="background-color: transparent"
     >
-      <!-- Anchor: fixed point in air -->
-      <a-sphere
-        id="anchor"
-        radius="0.01"
-        position="0 1.7 -1"
-        static-body
-        visible="false"
-      ></a-sphere>
 
       <!-- Ball -->
       <a-sphere
@@ -32,25 +21,75 @@
         radius="0.15"
         color="red"
         position="0 1.5 -1"
-        dynamic-body
       ></a-sphere>
 
-      <!-- Constraint: ball to anchor -->
-      <a-entity
-        constraint="type: pointToPoint; target: #anchor"
-        dynamic-body
-        position="0 1.5 -1"
-      ></a-entity>
-
       <!-- Hands -->
-      <a-entity hand-controls="hand: left" physics-collider></a-entity>
-      <a-entity hand-controls="hand: right" physics-collider></a-entity>
+      <a-entity id="leftHand" hand-controls="hand: left"></a-entity>
+      <a-entity id="rightHand" hand-controls="hand: right"></a-entity>
+
+      <!-- Fake "swing" animation -->
+      <a-animation id="swingAnim"
+        attribute="position"
+        to="0 1.5 -1"
+        dur="300"
+        easing="ease-out"
+        fill="forwards"
+        begin="swing"
+      ></a-animation>
     </a-scene>
 
-    <!-- Enter AR Button -->
-    <button
-      style="position: absolute; top: 20px; left: 20px; font-size: 18px; z-index: 999;"
-      onclick="document.querySelector('a-scene').enterAR()"
-    >Enter AR</button>
+    <script>
+      AFRAME.registerComponent('fake-swing', {
+        init: function () {
+          const ball = document.querySelector('#ball');
+          const left = document.querySelector('#leftHand');
+          const right = document.querySelector('#rightHand');
+          const anim = document.querySelector('#swingAnim');
+
+          this.el.sceneEl.addEventListener('loaded', () => {
+            this.tick = () => {
+              [left, right].forEach(hand => {
+                const handPos = hand.object3D.position;
+                const ballPos = ball.object3D.position;
+                const dist = handPos.distanceTo(ballPos);
+
+                if (dist < 0.25) {
+                  // Apply fake impulse
+                  const offsetX = (Math.random() - 0.5) * 0.3;
+                  const offsetY = 0.1;
+                  const offsetZ = (Math.random() - 0.5) * 0.3;
+                  const newPos = {
+                    x: ballPos.x + offsetX,
+                    y: ballPos.y + offsetY,
+                    z: ballPos.z + offsetZ,
+                  };
+
+                  ball.setAttribute('animation__swing', {
+                    property: 'position',
+                    to: `${newPos.x} ${newPos.y} ${newPos.z}`,
+                    dur: 300,
+                    easing: 'easeOutQuad',
+                    autoplay: true,
+                  });
+
+                  // Return to center after swing
+                  setTimeout(() => {
+                    ball.setAttribute('animation__return', {
+                      property: 'position',
+                      to: `0 1.5 -1`,
+                      dur: 400,
+                      easing: 'easeOutElastic',
+                      autoplay: true,
+                    });
+                  }, 300);
+                }
+              });
+            };
+          });
+        }
+      });
+
+      document.querySelector('a-scene').setAttribute('fake-swing', '');
+    </script>
   </body>
 </html>
