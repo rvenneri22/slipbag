@@ -1,103 +1,45 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Slip Bag with VR Hands</title>
+    <meta charset="utf-8" />
+    <title>VR Swinging Ball</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
-    <style>
-      #resetBtn {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        padding: 10px 20px;
-        font-size: 16px;
-        background: #333;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        z-index: 100;
-      }
-    </style>
   </head>
   <body>
-    <button id="resetBtn">Reset Swing</button>
-
-    <a-scene physics="debug: false" vr-mode-ui="enabled: true">
-      <!-- Camera -->
-      <a-entity id="cameraRig" position="0 1.6 0">
-        <a-camera wasd-controls-enabled="false"></a-camera>
+    <a-scene
+      physics="gravity: -9.8"
+      vr-mode-ui="enabled: true"
+      embedded
+    >
+      <!-- Camera + Controllers -->
+      <a-entity id="rig" movement-controls position="0 1.6 0">
+        <a-entity camera look-controls wasd-controls></a-entity>
+        <a-entity laser-controls="hand: left" physics-collider></a-entity>
+        <a-entity laser-controls="hand: right" physics-collider></a-entity>
       </a-entity>
 
-      <!-- Left Hand -->
-      <a-entity id="leftHand"
-        hand-controls="hand: left"
-        dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05">
-      </a-entity>
+      <!-- Floor -->
+      <a-plane static-body color="#777" height="30" width="30" rotation="-90 0 0"></a-plane>
 
-      <!-- Right Hand -->
-      <a-entity id="rightHand"
-        hand-controls="hand: right"
-        dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05">
-      </a-entity>
+      <!-- Ceiling -->
+      <a-box position="0 5 0" width="0.1" height="0.1" depth="0.1" visible="false"></a-box>
 
-      <!-- Ground -->
-      <a-plane rotation="-90 0 0" width="10" height="10" color="#222" static-body></a-plane>
+      <!-- Rope -->
+      <a-cylinder color="#444" position="0 4.5 0" height="1" radius="0.01"></a-cylinder>
 
-      <!-- Anchor -->
-      <a-sphere id="anchor" position="0 2.1 -1" radius="0.01" color="gray" static-body></a-sphere>
+      <!-- Ball (hanging from ceiling) -->
+      <a-sphere
+        id="ball"
+        position="0 4 0"
+        radius="0.2"
+        color="#ff4444"
+        dynamic-body
+      ></a-sphere>
 
-      <!-- Slip bag -->
-      <a-sphere id="slipBag" position="0 1.6 -1" radius="0.1" color="red" dynamic-body></a-sphere>
-
-      <!-- Constraint (rope) -->
-      <a-entity constraint="type: pointToPoint; target: #slipBag" position="0 2.1 -1"></a-entity>
-
-      <!-- Rope line -->
-      <a-entity id="rope" line="start: 0 2.1 -1; end: 0 1.6 -1; color: #fff"></a-entity>
-
-      <a-light type="ambient" color="#fff"></a-light>
-      <a-sky color="#111"></a-sky>
+      <!-- Lights -->
+      <a-entity light="type: ambient; color: #BBB"></a-entity>
+      <a-entity light="type: directional; intensity: 0.5" position="1 1 0"></a-entity>
     </a-scene>
-
-    <script>
-      // Rope visual tracker
-      AFRAME.registerComponent("update-rope", {
-        tick: function () {
-          const rope = document.querySelector("#rope");
-          const start = document.querySelector("#anchor").object3D.position;
-          const end = document.querySelector("#slipBag").object3D.position;
-
-          rope.setAttribute("line", {
-            start: `${start.x} ${start.y} ${start.z}`,
-            end: `${end.x} ${end.y} ${end.z}`,
-            color: "#fff"
-          });
-        }
-      });
-      document.querySelector("a-scene").setAttribute("update-rope", "");
-
-      // Start swing
-      const slipBag = document.querySelector("#slipBag");
-      slipBag.addEventListener("body-loaded", () => {
-        const force = new CANNON.Vec3(0.5, 0, 0);
-        const point = new CANNON.Vec3(0, 0, 0);
-        slipBag.body.applyImpulse(force, point);
-      });
-
-      // Reset Swing
-      document.getElementById("resetBtn").addEventListener("click", () => {
-        const body = slipBag.body;
-        if (!body) return;
-        body.velocity.set(0, 0, 0);
-        body.angularVelocity.set(0, 0, 0);
-        body.position.set(0, 1.6, -1);
-        body.quaternion.set(0, 0, 0, 1);
-        setTimeout(() => {
-          const force = new CANNON.Vec3(0.5, 0, 0);
-          const point = new CANNON.Vec3(0, 0, 0);
-          body.applyImpulse(force, point);
-        }, 100);
-      });
-    </script>
   </body>
 </html>
