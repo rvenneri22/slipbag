@@ -22,46 +22,48 @@
     <button id="resetBtn">Reset Swing</button>
 
     <a-scene physics="debug: false" vr-mode-ui="enabled: true">
-      <!-- Camera rig -->
-      <a-entity id="cameraRig" position="0 1.6 0">
+      <!-- Camera Rig -->
+      <a-entity id="rig" position="0 1.6 0">
         <a-camera wasd-controls-enabled="false"></a-camera>
       </a-entity>
 
-      <!-- Controllers with hands and colliders -->
-      <a-entity id="leftHand" laser-controls="hand: left" 
-                sphere-collider 
+      <!-- Hands with physics -->
+      <a-entity id="leftHand"
+                tracked-controls="hand: left; controller: 0"
                 dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05"
-                geometry="primitive: sphere; radius: 0.05" 
-                material="color: blue; opacity: 0.5"></a-entity>
+                geometry="primitive: sphere; radius: 0.05"
+                material="color: blue; opacity: 0.6">
+      </a-entity>
 
-      <a-entity id="rightHand" laser-controls="hand: right" 
-                sphere-collider 
+      <a-entity id="rightHand"
+                tracked-controls="hand: right; controller: 0"
                 dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05"
-                geometry="primitive: sphere; radius: 0.05" 
-                material="color: green; opacity: 0.5"></a-entity>
+                geometry="primitive: sphere; radius: 0.05"
+                material="color: green; opacity: 0.6">
+      </a-entity>
 
       <!-- Ground -->
       <a-plane rotation="-90 0 0" width="10" height="10" color="#222" static-body></a-plane>
 
-      <!-- Anchor point -->
+      <!-- Anchor -->
       <a-sphere id="anchor" position="0 2.1 -1" radius="0.01" color="gray" static-body></a-sphere>
 
       <!-- Slip bag -->
       <a-sphere id="slipBag" position="0 1.6 -1" radius="0.1" color="red" dynamic-body></a-sphere>
 
-      <!-- Constraint (rope joint) -->
+      <!-- Constraint -->
       <a-entity constraint="type: pointToPoint; target: #slipBag" position="0 2.1 -1"></a-entity>
 
-      <!-- Visual rope -->
+      <!-- Rope -->
       <a-entity id="rope" line="start: 0 2.1 -1; end: 0 1.6 -1; color: #fff"></a-entity>
 
-      <!-- Environment -->
-      <a-sky color="#111"></a-sky>
+      <!-- Lights & Sky -->
       <a-light type="ambient" color="#fff"></a-light>
+      <a-sky color="#111"></a-sky>
     </a-scene>
 
     <script>
-      // Rope position updater
+      // Rope updater
       AFRAME.registerComponent("update-rope", {
         tick: function () {
           const rope = document.querySelector("#rope");
@@ -80,7 +82,7 @@
 
       const slipBag = document.querySelector("#slipBag");
 
-      // Apply initial swing
+      // Initial swing
       slipBag.addEventListener("body-loaded", () => {
         const force = new CANNON.Vec3(0.5, 0, 0);
         const point = new CANNON.Vec3(0, 0, 0);
