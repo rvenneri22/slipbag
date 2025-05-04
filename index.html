@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>VR Slip Bag with Hands</title>
+    <title>Slip Bag with VR Hands</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
     <style>
@@ -22,24 +22,21 @@
     <button id="resetBtn">Reset Swing</button>
 
     <a-scene physics="debug: false" vr-mode-ui="enabled: true">
-      <!-- Camera Rig -->
-      <a-entity id="rig" position="0 1.6 0">
+      <!-- Camera -->
+      <a-entity id="cameraRig" position="0 1.6 0">
         <a-camera wasd-controls-enabled="false"></a-camera>
       </a-entity>
 
-      <!-- Hands with physics -->
+      <!-- Left Hand -->
       <a-entity id="leftHand"
-                tracked-controls="hand: left; controller: 0"
-                dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05"
-                geometry="primitive: sphere; radius: 0.05"
-                material="color: blue; opacity: 0.6">
+        hand-controls="hand: left"
+        dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05">
       </a-entity>
 
+      <!-- Right Hand -->
       <a-entity id="rightHand"
-                tracked-controls="hand: right; controller: 0"
-                dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05"
-                geometry="primitive: sphere; radius: 0.05"
-                material="color: green; opacity: 0.6">
+        hand-controls="hand: right"
+        dynamic-body="mass: 0.1; shape: sphere; sphereRadius: 0.05">
       </a-entity>
 
       <!-- Ground -->
@@ -51,19 +48,18 @@
       <!-- Slip bag -->
       <a-sphere id="slipBag" position="0 1.6 -1" radius="0.1" color="red" dynamic-body></a-sphere>
 
-      <!-- Constraint -->
+      <!-- Constraint (rope) -->
       <a-entity constraint="type: pointToPoint; target: #slipBag" position="0 2.1 -1"></a-entity>
 
-      <!-- Rope -->
+      <!-- Rope line -->
       <a-entity id="rope" line="start: 0 2.1 -1; end: 0 1.6 -1; color: #fff"></a-entity>
 
-      <!-- Lights & Sky -->
       <a-light type="ambient" color="#fff"></a-light>
       <a-sky color="#111"></a-sky>
     </a-scene>
 
     <script>
-      // Rope updater
+      // Rope visual tracker
       AFRAME.registerComponent("update-rope", {
         tick: function () {
           const rope = document.querySelector("#rope");
@@ -77,19 +73,17 @@
           });
         }
       });
-
       document.querySelector("a-scene").setAttribute("update-rope", "");
 
+      // Start swing
       const slipBag = document.querySelector("#slipBag");
-
-      // Initial swing
       slipBag.addEventListener("body-loaded", () => {
         const force = new CANNON.Vec3(0.5, 0, 0);
         const point = new CANNON.Vec3(0, 0, 0);
         slipBag.body.applyImpulse(force, point);
       });
 
-      // Reset button
+      // Reset Swing
       document.getElementById("resetBtn").addEventListener("click", () => {
         const body = slipBag.body;
         if (!body) return;
@@ -97,7 +91,6 @@
         body.angularVelocity.set(0, 0, 0);
         body.position.set(0, 1.6, -1);
         body.quaternion.set(0, 0, 0, 1);
-
         setTimeout(() => {
           const force = new CANNON.Vec3(0.5, 0, 0);
           const point = new CANNON.Vec3(0, 0, 0);
