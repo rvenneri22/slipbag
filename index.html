@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Fake Swing Ball in MR</title>
+    <title>Pendulum Ball in MR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   </head>
@@ -15,13 +15,13 @@
       style="background-color: transparent;"
       background="transparent: true"
     >
-      <!-- Red ball -->
+      <!-- Red ball (the slip bag) -->
       <a-sphere
         id="ball"
         radius="0.15"
-        color="red"
+        color="green"
         position="0 1.4 -1"
-        swing-ball
+        pendulum-ball
       ></a-sphere>
 
       <!-- Hands -->
@@ -30,43 +30,54 @@
     </a-scene>
 
     <script>
-      AFRAME.registerComponent("swing-ball", {
-        schema: {},
+      AFRAME.registerComponent("pendulum-ball", {
         init: function () {
-          this.ball = this.el;
-          this.left = document.querySelector("#leftHand");
-          this.right = document.querySelector("#rightHand");
+          this.ball = this.el.object3D;
+          this.anchor = new THREE.Vector3(0, 1.8, -1); // top of rope
+          this.position = this.ball.position.clone();
           this.velocity = new THREE.Vector3();
-          this.origin = this.ball.object3D.position.clone();
+          this.gravity = 5; // stronger to make it feel heavy
+          this.damping = 0.95;
+
+          this.left = document.querySelector("#leftHand").object3D;
+          this.right = document.querySelector("#rightHand").object3D;
         },
-        tick: function (time, deltaTime) {
-          const dt = deltaTime / 1000;
 
+        tick: function (time, delta) {
+          const dt = delta / 1000;
+
+          // Vector from anchor to current ball position
+          let rope = new THREE.Vector3().subVectors(this.position, this.anchor);
+          let ropeLength = rope.length();
+          rope.normalize();
+
+          // Simulate gravity pulling perpendicular to rope tension
+          let gravityForce = new THREE.Vector3(0, -1, 0).multiplyScalar(this.gravity);
+          let perp = gravityForce.sub(rope.multiplyScalar(gravityForce.dot(rope)));
+          this.velocity.addScaledVector(perp, dt);
+
+          // Hand push detection
           [this.left, this.right].forEach((hand) => {
-            const handPos = hand.object3D.position;
-            const ballPos = this.ball.object3D.position;
-            const distance = handPos.distanceTo(ballPos);
-
-            if (distance < 0.25) {
-              const dir = new THREE.Vector3()
-                .subVectors(ballPos, handPos)
-                .normalize()
-                .multiplyScalar(0.5); // impulse strength
-              this.velocity.add(dir);
+            const dist = hand.position.distanceTo(this.position);
+            if (dist < 0.25) {
+              let push = new THREE.Vector3().subVectors(this.position, hand.position).normalize().multiplyScalar(3);
+              this.velocity.add(push);
             }
           });
 
-          // Apply velocity to ball position
-          this.ball.object3D.position.addScaledVector(this.velocity, dt);
+          // Update position with velocity
+          this.position.addScaledVector(this.velocity, dt);
 
-          // Return to origin gradually
-          const toOrigin = new THREE.Vector3()
-            .subVectors(this.origin, this.ball.object3D.position)
-            .multiplyScalar(0.5 * dt);
-          this.velocity.add(toOrigin);
+          // Constrain to rope length
+          let corrected = new THREE.Vector3().subVectors(this.position, this.anchor);
+          corrected.setLength(0.4); // rope length
+          this.position.copy(this.anchor.clone().add(corrected));
 
           // Damping
-          this.velocity.multiplyScalar(0.95);
+          this.velocity.multiplyScalar(this.damping);
+
+          // Apply position to ball
+          this.ball.position.copy(this.position);
         },
       });
     </script>
