@@ -1,0 +1,27 @@
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene vr-mode-ui="enabled: true">
+      <a-camera position="0 1.6 0"></a-camera>
+
+      <!-- Slip Bag -->
+      <a-sphere id="slipBag" position="0 1.5 -1" radius="0.1" color="#ff0000"></a-sphere>
+
+      <!-- Light + Environment -->
+      <a-light type="ambient" color="#ffffff"></a-light>
+      <a-sky color="#202020"></a-sky>
+    </a-scene>
+
+    <script>
+      let angle = 0;
+      let radius = 0.4;
+      setInterval(() => {
+        angle += 0.05;
+        let x = Math.sin(angle) * radius;
+        document.querySelector("#slipBag").setAttribute("position", `${x} 1.5 -1`);
+      }, 16);
+    </script>
+  </body>
+</html>
