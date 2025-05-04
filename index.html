@@ -2,94 +2,73 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MR Fake Swing Ball</title>
+    <title>Fake Swing Ball in MR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   </head>
   <body>
     <a-scene
-      renderer="alpha: true"
       xr-mode="immersive-ar"
+      renderer="alpha: true"
       environment="enabled: false"
       webxr="requiredFeatures: local-floor; optionalFeatures: hand-tracking"
-      style="background-color: transparent"
+      style="background-color: transparent;"
+      background="transparent: true"
     >
-
-      <!-- Ball -->
+      <!-- Red ball -->
       <a-sphere
         id="ball"
         radius="0.15"
         color="red"
-        position="0 1.5 -1"
+        position="0 1.4 -1"
+        swing-ball
       ></a-sphere>
 
       <!-- Hands -->
       <a-entity id="leftHand" hand-controls="hand: left"></a-entity>
       <a-entity id="rightHand" hand-controls="hand: right"></a-entity>
-
-      <!-- Fake "swing" animation -->
-      <a-animation id="swingAnim"
-        attribute="position"
-        to="0 1.5 -1"
-        dur="300"
-        easing="ease-out"
-        fill="forwards"
-        begin="swing"
-      ></a-animation>
     </a-scene>
 
     <script>
-      AFRAME.registerComponent('fake-swing', {
+      AFRAME.registerComponent("swing-ball", {
+        schema: {},
         init: function () {
-          const ball = document.querySelector('#ball');
-          const left = document.querySelector('#leftHand');
-          const right = document.querySelector('#rightHand');
-          const anim = document.querySelector('#swingAnim');
+          this.ball = this.el;
+          this.left = document.querySelector("#leftHand");
+          this.right = document.querySelector("#rightHand");
+          this.velocity = new THREE.Vector3();
+          this.origin = this.ball.object3D.position.clone();
+        },
+        tick: function (time, deltaTime) {
+          const dt = deltaTime / 1000;
 
-          this.el.sceneEl.addEventListener('loaded', () => {
-            this.tick = () => {
-              [left, right].forEach(hand => {
-                const handPos = hand.object3D.position;
-                const ballPos = ball.object3D.position;
-                const dist = handPos.distanceTo(ballPos);
+          [this.left, this.right].forEach((hand) => {
+            const handPos = hand.object3D.position;
+            const ballPos = this.ball.object3D.position;
+            const distance = handPos.distanceTo(ballPos);
 
-                if (dist < 0.25) {
-                  // Apply fake impulse
-                  const offsetX = (Math.random() - 0.5) * 0.3;
-                  const offsetY = 0.1;
-                  const offsetZ = (Math.random() - 0.5) * 0.3;
-                  const newPos = {
-                    x: ballPos.x + offsetX,
-                    y: ballPos.y + offsetY,
-                    z: ballPos.z + offsetZ,
-                  };
-
-                  ball.setAttribute('animation__swing', {
-                    property: 'position',
-                    to: `${newPos.x} ${newPos.y} ${newPos.z}`,
-                    dur: 300,
-                    easing: 'easeOutQuad',
-                    autoplay: true,
-                  });
-
-                  // Return to center after swing
-                  setTimeout(() => {
-                    ball.setAttribute('animation__return', {
-                      property: 'position',
-                      to: `0 1.5 -1`,
-                      dur: 400,
-                      easing: 'easeOutElastic',
-                      autoplay: true,
-                    });
-                  }, 300);
-                }
-              });
-            };
+            if (distance < 0.25) {
+              const dir = new THREE.Vector3()
+                .subVectors(ballPos, handPos)
+                .normalize()
+                .multiplyScalar(0.5); // impulse strength
+              this.velocity.add(dir);
+            }
           });
-        }
-      });
 
-      document.querySelector('a-scene').setAttribute('fake-swing', '');
+          // Apply velocity to ball position
+          this.ball.object3D.position.addScaledVector(this.velocity, dt);
+
+          // Return to origin gradually
+          const toOrigin = new THREE.Vector3()
+            .subVectors(this.origin, this.ball.object3D.position)
+            .multiplyScalar(0.5 * dt);
+          this.velocity.add(toOrigin);
+
+          // Damping
+          this.velocity.multiplyScalar(0.95);
+        },
+      });
     </script>
   </body>
 </html>
