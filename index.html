@@ -3,43 +3,51 @@
   <head>
     <meta charset="utf-8" />
     <title>VR Swinging Ball</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
   </head>
   <body>
-    <a-scene
-      physics="gravity: -9.8"
-      vr-mode-ui="enabled: true"
-      embedded
-    >
-      <!-- Camera + Controllers -->
-      <a-entity id="rig" movement-controls position="0 1.6 0">
-        <a-entity camera look-controls wasd-controls></a-entity>
-        <a-entity laser-controls="hand: left" physics-collider></a-entity>
-        <a-entity laser-controls="hand: right" physics-collider></a-entity>
-      </a-entity>
-
+    <a-scene physics="gravity: -9.8" vr-mode-ui="enabled: true">
+      
       <!-- Floor -->
-      <a-plane static-body color="#777" height="30" width="30" rotation="-90 0 0"></a-plane>
+      <a-plane static-body color="#ccc" height="20" width="20" rotation="-90 0 0"></a-plane>
 
-      <!-- Ceiling -->
-      <a-box position="0 5 0" width="0.1" height="0.1" depth="0.1" visible="false"></a-box>
-
-      <!-- Rope -->
-      <a-cylinder color="#444" position="0 4.5 0" height="1" radius="0.01"></a-cylinder>
-
-      <!-- Ball (hanging from ceiling) -->
+      <!-- Ball (will hang) -->
       <a-sphere
         id="ball"
-        position="0 4 0"
         radius="0.2"
-        color="#ff4444"
+        color="green"
+        position="0 2.5 -2"
         dynamic-body
       ></a-sphere>
 
+      <!-- Invisible anchor point on ceiling -->
+      <a-sphere
+        id="anchor"
+        radius="0.05"
+        color="black"
+        position="0 3 -2"
+        static-body
+      ></a-sphere>
+
+      <!-- Constraint to hang the ball -->
+      <a-entity
+        constraint="type: pointToPoint; target: #anchor"
+        data-aframe-inspector-exclude
+        ></a-entity>
+
       <!-- Lights -->
-      <a-entity light="type: ambient; color: #BBB"></a-entity>
-      <a-entity light="type: directional; intensity: 0.5" position="1 1 0"></a-entity>
+      <a-entity light="type: ambient; intensity: 0.6"></a-entity>
+      <a-entity light="type: directional; intensity: 0.8" position="0 4 1"></a-entity>
+
+      <!-- Camera + Hands -->
+      <a-entity id="rig" position="0 1.6 0">
+        <a-entity camera look-controls wasd-controls></a-entity>
+        <a-entity hand-controls="hand: left" physics-collider></a-entity>
+        <a-entity hand-controls="hand: right" physics-collider></a-entity>
+      </a-entity>
+
     </a-scene>
   </body>
 </html>
