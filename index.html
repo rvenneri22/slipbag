@@ -8,46 +8,50 @@
     <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
   </head>
   <body>
-    <a-scene physics="gravity: -9.8" vr-mode-ui="enabled: true">
-      
+    <a-scene
+      physics="driver: ammo; debug: false; gravity: -9.8"
+      vr-mode-ui="enabled: true"
+      embedded
+    >
       <!-- Floor -->
       <a-plane static-body color="#ccc" height="20" width="20" rotation="-90 0 0"></a-plane>
 
-      <!-- Ball (will hang) -->
+      <!-- Ball -->
       <a-sphere
         id="ball"
         radius="0.2"
-        color="green"
+        color="red"
         position="0 2.5 -2"
         dynamic-body
       ></a-sphere>
 
-      <!-- Invisible anchor point on ceiling -->
+      <!-- Anchor -->
       <a-sphere
         id="anchor"
-        radius="0.05"
+        radius="0.01"
         color="black"
-        position="0 3 -2"
+        position="0 3.2 -2"
         static-body
+        visible="false"
       ></a-sphere>
 
-      <!-- Constraint to hang the ball -->
+      <!-- Constraint: ball -> anchor -->
       <a-entity
         constraint="type: pointToPoint; target: #anchor"
-        data-aframe-inspector-exclude
-        ></a-entity>
+        dynamic-body
+        position="0 2.5 -2"
+      ></a-entity>
 
-      <!-- Lights -->
-      <a-entity light="type: ambient; intensity: 0.6"></a-entity>
-      <a-entity light="type: directional; intensity: 0.8" position="0 4 1"></a-entity>
+      <!-- Lighting -->
+      <a-entity light="type: ambient; intensity: 0.5"></a-entity>
+      <a-entity light="type: directional; intensity: 0.8" position="1 4 2"></a-entity>
 
-      <!-- Camera + Hands -->
+      <!-- Camera Rig & Hands -->
       <a-entity id="rig" position="0 1.6 0">
-        <a-entity camera look-controls wasd-controls></a-entity>
+        <a-entity camera wasd-controls look-controls></a-entity>
         <a-entity hand-controls="hand: left" physics-collider></a-entity>
         <a-entity hand-controls="hand: right" physics-collider></a-entity>
       </a-entity>
-
     </a-scene>
   </body>
 </html>
