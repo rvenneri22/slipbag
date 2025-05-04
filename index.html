@@ -1,27 +1,60 @@
 <html>
   <head>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
   </head>
   <body>
-    <a-scene vr-mode-ui="enabled: true">
-      <a-camera position="0 1.6 0"></a-camera>
+    <a-scene physics="gravity: -9.8" embedded>
+      <!-- Camera / Player Head -->
+      <a-entity id="cameraRig" position="0 1.6 0">
+        <a-camera wasd-controls-enabled="false"></a-camera>
+      </a-entity>
+
+      <!-- Anchor point -->
+      <a-sphere id="anchor" position="0 2 -1" radius="0.01" color="#888" static-body></a-sphere>
 
       <!-- Slip Bag -->
-      <a-sphere id="slipBag" position="0 1.5 -1" radius="0.1" color="#ff0000"></a-sphere>
+      <a-sphere id="slipBag"
+                position="0 1.5 -1"
+                radius="0.1"
+                color="#ff0000"
+                dynamic-body></a-sphere>
 
-      <!-- Light + Environment -->
-      <a-light type="ambient" color="#ffffff"></a-light>
-      <a-sky color="#202020"></a-sky>
+      <!-- Physics constraint (swing point) -->
+      <a-entity constraint="type: pointToPoint; target: #slipBag" position="0 2 -1"></a-entity>
+
+      <!-- Rope line -->
+      <a-entity id="rope" line="start: 0 2 -1; end: 0 1.5 -1; color: #fff"></a-entity>
+
+      <!-- Ground -->
+      <a-plane rotation="-90 0 0" width="10" height="10" color="#222" static-body></a-plane>
+
+      <!-- Lighting & Environment -->
+      <a-light type="ambient" color="#fff"></a-light>
+      <a-sky color="#111"></a-sky>
     </a-scene>
 
     <script>
-      let angle = 0;
-      let radius = 0.4;
-      setInterval(() => {
-        angle += 0.05;
-        let x = Math.sin(angle) * radius;
-        document.querySelector("#slipBag").setAttribute("position", `${x} 1.5 -1`);
-      }, 16);
+      // Update rope each frame
+      AFRAME.registerComponent("rope-updater", {
+        tick: function () {
+          const rope = document.querySelector("#rope");
+          const slipBag = document.querySelector("#slipBag");
+          const anchor = document.querySelector("#anchor");
+
+          const start = anchor.getAttribute("position");
+          const end = slipBag.getAttribute("position");
+
+          rope.setAttribute("line", {
+            start: `${start.x} ${start.y} ${start.z}`,
+            end: `${end.x} ${end.y} ${end.z}`,
+            color: "#fff"
+          });
+        }
+      });
+
+      // Attach updater to scene
+      document.querySelector("a-scene").setAttribute("rope-updater", "");
     </script>
   </body>
 </html>
