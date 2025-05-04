@@ -2,21 +2,22 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MR Swinging Ball</title>
+    <title>Mixed Reality Swinging Ball</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
   </head>
   <body>
     <a-scene
-      webxr="optionalFeatures: hit-test,dom-overlay,local-floor,bounded-floor,hand-tracking,anchors,depth-sensing,plane-detection,light-estimation,hit-test;"
-      renderer="colorManagement: true; physicallyCorrectLights: true;"
-      xr-mode="immersive-ar"
-      embedded
+      vr-mode-ui="enabled: false"
       environment="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true;"
+      embedded
+      xr-mode="immersive-ar"
+      webxr="optionalFeatures: hit-test,dom-overlay,local-floor,hand-tracking,anchors,light-estimation,depth-sensing"
+      style="background-color: transparent"
       physics="driver: ammo; gravity: -9.8"
     >
-
       <!-- Ball -->
       <a-sphere
         id="ball"
@@ -45,7 +46,9 @@
       <!-- Hands -->
       <a-entity hand-controls="hand: left" physics-collider></a-entity>
       <a-entity hand-controls="hand: right" physics-collider></a-entity>
-
     </a-scene>
+
+    <!-- Enter AR button -->
+    <button style="position: absolute; top: 20px; left: 20px; font-size: 18px;" onclick="document.querySelector('a-scene').enterAR()">Enter AR</button>
   </body>
 </html>
