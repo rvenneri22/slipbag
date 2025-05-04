@@ -1,49 +1,57 @@
 <html>
   <head>
+    <title>VR Slip Bag</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
+    <style>
+      #resetBtn {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background: #333;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        z-index: 100;
+      }
+    </style>
   </head>
   <body>
-    <a-scene physics="gravity: -9.8" embedded>
-      <!-- Camera / Player Head -->
-      <a-entity id="cameraRig" position="0 1.6 0">
+    <button id="resetBtn">Reset Swing</button>
+
+    <a-scene physics="debug: false" embedded>
+      <!-- Camera -->
+      <a-entity position="0 1.6 0">
         <a-camera wasd-controls-enabled="false"></a-camera>
       </a-entity>
-
-      <!-- Anchor point -->
-      <a-sphere id="anchor" position="0 2 -1" radius="0.01" color="#888" static-body></a-sphere>
-
-      <!-- Slip Bag -->
-      <a-sphere id="slipBag"
-                position="0 1.5 -1"
-                radius="0.1"
-                color="#ff0000"
-                dynamic-body></a-sphere>
-
-      <!-- Physics constraint (swing point) -->
-      <a-entity constraint="type: pointToPoint; target: #slipBag" position="0 2 -1"></a-entity>
-
-      <!-- Rope line -->
-      <a-entity id="rope" line="start: 0 2 -1; end: 0 1.5 -1; color: #fff"></a-entity>
 
       <!-- Ground -->
       <a-plane rotation="-90 0 0" width="10" height="10" color="#222" static-body></a-plane>
 
-      <!-- Lighting & Environment -->
-      <a-light type="ambient" color="#fff"></a-light>
+      <!-- Anchor point -->
+      <a-sphere id="anchor" position="0 2.1 -1" radius="0.01" color="gray" static-body></a-sphere>
+
+      <!-- Slip bag -->
+      <a-sphere id="slipBag" position="0 1.6 -1" radius="0.1" color="red" dynamic-body></a-sphere>
+
+      <!-- Constraint (physics joint) -->
+      <a-entity constraint="type: pointToPoint; target: #slipBag" position="0 2.1 -1"></a-entity>
+
+      <!-- Rope visual -->
+      <a-entity id="rope" line="start: 0 2.1 -1; end: 0 1.6 -1; color: #fff"></a-entity>
+
       <a-sky color="#111"></a-sky>
     </a-scene>
 
     <script>
-      // Update rope each frame
-      AFRAME.registerComponent("rope-updater", {
+      // Rope updater to follow the swinging bag
+      AFRAME.registerComponent("update-rope", {
         tick: function () {
           const rope = document.querySelector("#rope");
-          const slipBag = document.querySelector("#slipBag");
-          const anchor = document.querySelector("#anchor");
-
-          const start = anchor.getAttribute("position");
-          const end = slipBag.getAttribute("position");
+          const start = document.querySelector("#anchor").object3D.position;
+          const end = document.querySelector("#slipBag").object3D.position;
 
           rope.setAttribute("line", {
             start: `${start.x} ${start.y} ${start.z}`,
@@ -53,8 +61,34 @@
         }
       });
 
-      // Attach updater to scene
-      document.querySelector("a-scene").setAttribute("rope-updater", "");
+      document.querySelector("a-scene").setAttribute("update-rope", "");
+
+      // Apply initial swing impulse when ready
+      const slipBag = document.querySelector("#slipBag");
+      slipBag.addEventListener("body-loaded", () => {
+        const force = new CANNON.Vec3(0.5, 0, 0);
+        const point = new CANNON.Vec3(0, 0, 0);
+        slipBag.body.applyImpulse(force, point);
+      });
+
+      // Reset swing on button press
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        const body = slipBag.body;
+        if (!body) return;
+
+        // Reset physics values
+        body.velocity.set(0, 0, 0);
+        body.angularVelocity.set(0, 0, 0);
+        body.position.set(0, 1.6, -1);
+        body.quaternion.set(0, 0, 0, 1);
+
+        // Re-apply swing
+        setTimeout(() => {
+          const force = new CANNON.Vec3(0.5, 0, 0);
+          const point = new CANNON.Vec3(0, 0, 0);
+          body.applyImpulse(force, point);
+        }, 100);
+      });
     </script>
   </body>
 </html>
